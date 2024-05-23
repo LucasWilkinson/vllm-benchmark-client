@@ -256,24 +256,26 @@ def main(args: argparse.Namespace):
         results.append(benchmark_result)
 
     # Save config and results to json
-    if args.save_result:
-        result_json = {
-            "date": datetime.now().strftime("%Y%m%d-%H%M%S"),
-            "backend": backend,
-            "version": args.version,
-            "model_id": model_id,
-            "tokenizer_id": tokenizer_id,
-            "best_of": args.best_of,
-            "use_beam_search": args.use_beam_search,
-            "query_issue_time": query_issue_time,
-            "qps_sweep": results
-        }
+    result_json = {
+        "date": datetime.now().strftime("%Y%m%d-%H%M%S"),
+        "backend": backend,
+        "version": args.version,
+        "model_id": model_id,
+        "tokenizer_id": tokenizer_id,
+        "best_of": args.best_of,
+        "use_beam_search": args.use_beam_search,
+        "query_issue_time": query_issue_time,
+        "qps_sweep": results
+    }
 
-        # Save to file
-        base_model_id = model_id.split("/")[-1]
-        file_name = f"{backend}-{base_model_id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
-        with open(file_name, "w") as outfile:
-            json.dump(result_json, outfile, cls=EnhancedJSONEncoder)
+    # Save to file
+    base_model_id = model_id.split("/")[-1]
+    file_name = f"{backend}-{base_model_id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+    if args.outfile:
+        file_name = outfile
+
+    with open(file_name, "w") as outfile:
+        json.dump(result_json, outfile, cls=EnhancedJSONEncoder)
 
 
 if __name__ == "__main__":
@@ -340,7 +342,7 @@ if __name__ == "__main__":
         "--qps-values",
         type=float,
         nargs='+',
-        default=[1, 5, 10, 20],
+        default=[0.1, 0.5, 1, 5, 10, 15],
         help="List of QPS (Queries Per Second) values to sweep over.",
     )
     parser.add_argument("--seed", type=int, default=0)
@@ -355,9 +357,8 @@ if __name__ == "__main__":
         help="Specify to disable tqdm progress bar.",
     )
     parser.add_argument(
-        "--save-result",
-        action="store_true",
-        help="Specify to save benchmark results to a json file",
+        "--outfile",
+        help="Specify output file to save benchmark results to, defualt {backend}-{base_model_id}-{time}",
     )
 
     args = parser.parse_args()
