@@ -217,7 +217,6 @@ async def benchmark(
 
 
 def main(args: argparse.Namespace):
-    print(args)
     random.seed(args.seed)
     np.random.seed(args.seed)
 
@@ -258,6 +257,7 @@ def main(args: argparse.Namespace):
     # Save config and results to json
     result_json = {
         "date": datetime.now().strftime("%Y%m%d-%H%M%S"),
+        "dataset": args.dataset,
         "backend": backend,
         "version": args.version,
         "model_id": model_id,
@@ -272,7 +272,7 @@ def main(args: argparse.Namespace):
     base_model_id = model_id.split("/")[-1]
     file_name = f"{backend}-{base_model_id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     if args.outfile:
-        file_name = outfile
+        file_name = args.outfile
 
     with open(file_name, "w") as outfile:
         json.dump(result_json, outfile, cls=EnhancedJSONEncoder)
