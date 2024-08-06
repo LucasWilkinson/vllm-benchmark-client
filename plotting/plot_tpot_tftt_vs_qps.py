@@ -2,10 +2,19 @@ import json
 import argparse
 import matplotlib.pyplot as plt
 
-def load_json(file_path):
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+def load_json(file_paths):
+    merged_data = None
+    for file_path in file_paths:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            
+        if merged_data is not None:
+            merged_data["qps_sweep"].extend(data["qps_sweep"])
+        else:
+            merged_data = data
+        merged_data["qps_sweep"] = sorted(merged_data["qps_sweep"], 
+                                          key=lambda x: x['qps'])
+    return merged_data
 
 def plot_throughput(data, output_file):
     qps = [entry['qps'] for entry in data['qps_sweep']]
@@ -46,10 +55,10 @@ def plot_throughput(data, output_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Plot throughput metrics from JSON file.')
-    parser.add_argument('file_path', type=str, help='Path to the JSON file containing throughput data.')
+    parser.add_argument('file_paths', nargs='+', type=str, help='Path to the JSON file containing throughput data.')
     parser.add_argument('--output', type=str, default='ttft_tpot_vs_qps.pdf', help='Output PDF file name')
     
     args = parser.parse_args()
     
-    data = load_json(args.file_path)
+    data = load_json(args.file_paths)
     plot_throughput(data, args.output)

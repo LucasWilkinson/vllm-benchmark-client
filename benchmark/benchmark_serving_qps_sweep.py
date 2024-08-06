@@ -229,6 +229,7 @@ def main(args: argparse.Namespace):
     else:
         api_url = f"http://{args.host}:{args.port}{args.endpoint}"
 
+    print(api_url)
     tokenizer = get_tokenizer(tokenizer_id,
                             trust_remote_code=args.trust_remote_code)
     
@@ -304,7 +305,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--endpoint",
         type=str,
-        default="/generate",
+        default="/v1/completions",
         help="API endpoint.",
     )
     parser.add_argument("--dataset",
@@ -342,7 +343,7 @@ if __name__ == "__main__":
         "--qps-values",
         type=float,
         nargs='+',
-        default=[0.1, 0.5, 1, 5, 10, 15],
+        default=[0.1, 0.5, 1, 5],
         help="List of QPS (Queries Per Second) values to sweep over.",
     )
     parser.add_argument("--seed", type=int, default=0)
