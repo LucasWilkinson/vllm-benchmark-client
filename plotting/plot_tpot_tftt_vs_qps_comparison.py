@@ -57,8 +57,9 @@ def plot_throughput(data_list, output_file):
 
     handles, labels = plt.gca().get_legend_handles_labels()
     plt.gcf().suptitle(" vs. ".join([name for name, _ in data_list]))
-    plt.gcf().legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.95), 
+    plt.gcf().legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.96), 
                      ncol=len(labels))
+    plt.tight_layout()
     plt.savefig(output_file, bbox_inches='tight')
     print(f"Plot saved as {output_file}")
 
