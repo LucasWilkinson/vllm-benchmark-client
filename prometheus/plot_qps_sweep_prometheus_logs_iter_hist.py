@@ -14,6 +14,7 @@ class PrometheusClient:
     def get_metric(self, metric_name, time_window_expr, model_id):
         query_str = f"increase({metric_name}{{model_name=\"{model_id}\"}}{time_window_expr})"
         response = requests.get(self.query_api_url, params={'query': query_str})
+        print(response.json())
         return response.json()['data']['result']
 
 class BenchmarkPlotter:
@@ -57,6 +58,7 @@ class BenchmarkPlotter:
     def plot_hist(self, metric_name, qps, promql_time, include_inf=True, ax=None, normalize=True, idx=0, color=None):
         data = {}
         metric_results = self.prom.get_metric(metric_name, promql_time, self.model_id)
+        print(metric_results)
 
         for metric_result in metric_results:
             le = metric_result['metric']['le']
