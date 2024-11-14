@@ -281,7 +281,9 @@ async def async_request_openai_completions(
                     output.success = True
                     output.latency = latency
                 else:
-                    raise Exception(f"Bad reponse {response} {response.content} {response.reason} {response}")
+                    raise Exception(
+                        f"Bad reponse {response} {response.content} {response.reason} {response}"
+                    )
         except Exception as e:
             raise e
         #     output.success = False
@@ -367,7 +369,9 @@ async def async_request_openai_chat_completions(
                 else:
                     output.error = response.reason or ""
                     output.success = False
-                    raise Exception(f"Bad reponse {response} {response.content} {response.reason}")
+                    raise Exception(
+                        f"Bad reponse {response} {response.content} {response.reason}"
+                    )
         except Exception as e:
             raise e
 

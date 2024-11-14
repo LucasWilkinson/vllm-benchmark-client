@@ -61,6 +61,7 @@ class BenchmarkMetrics:
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
+
     def default(self, o):
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
@@ -73,11 +74,10 @@ def sample_requests(
     tokenizer: PreTrainedTokenizerBase,
 ) -> List[Tuple[str, int, int]]:
     # Load the dataset.
-    return get_dataset(
-        name=dataset_name,
-        tokenizer=tokenizer,
-        dataset_args=DatasetArgs(num_samples=num_requests)
-    )
+    return get_dataset(name=dataset_name,
+                       tokenizer=tokenizer,
+                       dataset_args=DatasetArgs(num_samples=num_requests))
+
 
 async def get_request(
     input_requests: List[Tuple[str, int, int]],
@@ -96,14 +96,10 @@ async def get_request(
         await asyncio.sleep(interval)
 
 
-def calculate_metrics(
-    input_requests: List[Tuple[str, int, int]],
-    outputs: List[RequestFuncOutput],
-    dur_s: float,
-    tokenizer: PreTrainedTokenizerBase,
-    qps: float,
-    promql_window: str
-) -> BenchmarkMetrics:
+def calculate_metrics(input_requests: List[Tuple[str, int, int]],
+                      outputs: List[RequestFuncOutput], dur_s: float,
+                      tokenizer: PreTrainedTokenizerBase, qps: float,
+                      promql_window: str) -> BenchmarkMetrics:
     total_output = 0
     total_input = 0
     completed = 0
@@ -114,7 +110,9 @@ def calculate_metrics(
             output_len = len(tokenizer.encode(outputs[i].generated_text))
             total_output += output_len
             total_input += input_requests[i][1]
-            per_token_latencies.append((outputs[i].latency - outputs[i].ttft) / output_len)
+            if output_len > 0:
+                per_token_latencies.append(
+                    (outputs[i].latency - outputs[i].ttft) / output_len)
             ttfts.append(outputs[i].ttft)
             completed += 1
 
@@ -132,8 +130,7 @@ def calculate_metrics(
         median_tpot_ms=np.median(per_token_latencies) * 1000,
         p99_tpot_ms=np.percentile(per_token_latencies, 99) * 1000,
         qps=qps,
-        promql_window=promql_window
-    )
+        promql_window=promql_window)
 
     return metrics
 
@@ -175,9 +172,8 @@ async def benchmark(
         )
         tasks.append(
             asyncio.create_task(
-                request_func(request_func_input=request_func_input, pbar=pbar)
-            )
-        )
+                request_func(request_func_input=request_func_input,
+                             pbar=pbar)))
 
     outputs = await asyncio.gather(*tasks)
 
@@ -188,14 +184,12 @@ async def benchmark(
     benchmark_duration = time.perf_counter() - benchmark_start_time
     promql_window = f"[{benchmark_unix_end_time - benchmark_unix_start_time}s] @ {benchmark_unix_end_time}"
 
-    metrics = calculate_metrics(
-        input_requests=input_requests,
-        outputs=outputs,
-        dur_s=benchmark_duration,
-        tokenizer=tokenizer,
-        qps=request_rate,
-        promql_window=promql_window
-    )
+    metrics = calculate_metrics(input_requests=input_requests,
+                                outputs=outputs,
+                                dur_s=benchmark_duration,
+                                tokenizer=tokenizer,
+                                qps=request_rate,
+                                promql_window=promql_window)
 
     print(f"Successful requests: {metrics.completed}")
     print(f"Benchmark duration: {benchmark_duration:.2f} s")
@@ -210,7 +204,7 @@ async def benchmark(
     print(f"Mean TPOT: {metrics.mean_tpot_ms:.2f} ms")
     print(f"Median TPOT: {metrics.median_tpot_ms:.2f} ms")
     print(f"P99 TPOT: {metrics.p99_tpot_ms:.2f} ms")
-    
+
     print("=" * 40, "\n")
 
     return metrics
@@ -231,8 +225,8 @@ def main(args: argparse.Namespace):
 
     print(api_url)
     tokenizer = get_tokenizer(tokenizer_id,
-                            trust_remote_code=args.trust_remote_code)
-    
+                              trust_remote_code=args.trust_remote_code)
+
     qps_values = args.qps_values
     query_issue_time = args.query_issue_time
 
@@ -240,7 +234,7 @@ def main(args: argparse.Namespace):
     for request_rate in qps_values:
         num_prompts = int(query_issue_time * request_rate)
         input_requests = sample_requests(args.dataset, num_prompts, tokenizer)
-        
+
         benchmark_result = asyncio.run(
             benchmark(
                 backend=backend,
@@ -359,7 +353,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--outfile",
-        help="Specify output file to save benchmark results to, defualt {backend}-{base_model_id}-{time}",
+        help=
+        "Specify output file to save benchmark results to, defualt {backend}-{base_model_id}-{time}",
     )
 
     args = parser.parse_args()

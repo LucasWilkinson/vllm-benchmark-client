@@ -20,8 +20,8 @@ DatasetTriple = List[Tuple[str, int, int]]
 
 
 def make_dataset_triples(prompts: List[str], completions: List[str],
-                        tokenizer: PreTrainedTokenizerBase,
-                        dataset_args: DatasetArgs) -> DatasetTriple:
+                         tokenizer: PreTrainedTokenizerBase,
+                         dataset_args: DatasetArgs) -> DatasetTriple:
     assert len(prompts) == len(completions)
     dataset = []
     for prompt, completion in zip(prompts, completions):
@@ -50,7 +50,7 @@ def make_dataset_triples(prompts: List[str], completions: List[str],
 # ultrachat
 # https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k
 def get_ultrachat(tokenizer: PreTrainedTokenizerBase,
-                dataset_args: DatasetArgs) -> DatasetTriple:
+                  dataset_args: DatasetArgs) -> DatasetTriple:
     # Load dataset.
     ds = load_dataset(
         "HuggingFaceH4/ultrachat_200k",
@@ -72,8 +72,8 @@ def get_ultrachat(tokenizer: PreTrainedTokenizerBase,
         for i in range(2, len(convo), 2):
             prompts.append(
                 tokenizer.apply_chat_template(convo[:i],
-                                            tokenize=False,
-                                            add_generation_prompt=True))
+                                              tokenize=False,
+                                              add_generation_prompt=True))
             completions.append(convo[i]["content"])
 
     # Convert to dataset triples for consumption by the benchmark scripts.
@@ -92,11 +92,13 @@ SHAREGPT_PATH = "ShareGPT_V3_unfiltered_cleaned_split.json"
 
 
 def get_sharegpt(tokenizer: PreTrainedTokenizerBase,
-                dataset_args: DatasetArgs) -> DatasetTriple:
+                 dataset_args: DatasetArgs) -> DatasetTriple:
     # Load data (possibly downloading first).
     share_gpt_path = Path(SHAREGPT_PATH)
     if not share_gpt_path.exists():
-        raise ValueError(f"sharegpt not found. To download, run: \n\n\t{SHAREGPT_DOWNLOAD_STR}")
+        raise ValueError(
+            f"sharegpt not found. To download, run: \n\n\t{SHAREGPT_DOWNLOAD_STR}"
+        )
     assert share_gpt_path.exists()
     with open(share_gpt_path) as f:
         dataset = json.load(f)
@@ -116,16 +118,20 @@ def get_sharegpt(tokenizer: PreTrainedTokenizerBase,
         dataset_args=dataset_args,
     )
 
+
 # sonnet
 SONNET_PATH = "sonnet.txt"
-SONNET_CHARS = int(1024 * 3.415) # 3.415 char per token
+SONNET_CHARS = int(1024 * 3.415)  # 3.415 char per token
+
 
 def get_sonnet(tokenizer: PreTrainedTokenizerBase,
-            dataset_args: DatasetArgs) -> DatasetTriple:
+               dataset_args: DatasetArgs) -> DatasetTriple:
     # Load data (possibly downloading first).
     sonnet_path = Path(SONNET_PATH)
     if not sonnet_path.exists():
-        raise ValueError(f"Sonnet not found. This should be in your `vllm/benchmarks directory.")
+        raise ValueError(
+            f"Sonnet not found. This should be in your `vllm/benchmarks directory."
+        )
     with open(sonnet_path) as f:
         poem_lines = f.readlines()
 
@@ -144,12 +150,11 @@ def get_sonnet(tokenizer: PreTrainedTokenizerBase,
     convo.append({
         "content": f"Continue the following poem: \n\n{poem_start}",
         "role": "user",
-    }) 
+    })
 
-    prompt = tokenizer.apply_chat_template(
-        convo,
-        tokenize=False,
-        add_generation_prompt=True)
+    prompt = tokenizer.apply_chat_template(convo,
+                                           tokenize=False,
+                                           add_generation_prompt=True)
 
     prompts = [prompt] * dataset_args.num_samples
     completions = [""] * dataset_args.num_samples
@@ -178,4 +183,4 @@ def get_dataset(name: str, tokenizer: PreTrainedTokenizerBase,
         )
     else:
         return _DATASET_REGISTRY[name](tokenizer=tokenizer,
-                                    dataset_args=dataset_args)
+                                       dataset_args=dataset_args)

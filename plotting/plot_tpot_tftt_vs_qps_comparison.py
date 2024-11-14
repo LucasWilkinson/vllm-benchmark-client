@@ -2,19 +2,21 @@ import json
 import argparse
 import matplotlib.pyplot as plt
 
+
 def load_json(file_paths):
     merged_data = None
     for file_path in file_paths:
         with open(file_path, 'r') as file:
             data = json.load(file)
-            
+
         if merged_data is not None:
             merged_data["qps_sweep"].extend(data["qps_sweep"])
         else:
             merged_data = data
-        merged_data["qps_sweep"] = sorted(merged_data["qps_sweep"], 
+        merged_data["qps_sweep"] = sorted(merged_data["qps_sweep"],
                                           key=lambda x: x['qps'])
     return merged_data
+
 
 def plot_throughput(data_list, output_file):
     plt.figure(figsize=(12, 8))
@@ -57,20 +59,32 @@ def plot_throughput(data_list, output_file):
 
     handles, labels = plt.gca().get_legend_handles_labels()
     plt.gcf().suptitle(" vs. ".join([name for name, _ in data_list]))
-    plt.gcf().legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.96), 
+    plt.gcf().legend(handles,
+                     labels,
+                     loc="upper center",
+                     bbox_to_anchor=(0.5, 0.96),
                      ncol=len(labels))
     plt.tight_layout()
     plt.savefig(output_file, bbox_inches='tight')
     print(f"Plot saved as {output_file}")
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Plot throughput metrics from JSON file.')
-    parser.add_argument('--src', nargs='+', type=str, 
-                        help='Path to the JSON file containing throughput data.', action='append')
-    parser.add_argument('--output', type=str, default='ttft_tpot_vs_qps.pdf', help='Output PDF file name')
-    
+    parser = argparse.ArgumentParser(
+        description='Plot throughput metrics from JSON file.')
+    parser.add_argument(
+        '--src',
+        nargs='+',
+        type=str,
+        help='Path to the JSON file containing throughput data.',
+        action='append')
+    parser.add_argument('--output',
+                        type=str,
+                        default='ttft_tpot_vs_qps.pdf',
+                        help='Output PDF file name')
+
     args = parser.parse_args()
     print(args.src)
-    
+
     data_list = [(s[0], load_json(s[1:])) for s in args.src]
     plot_throughput(data_list, args.output)

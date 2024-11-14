@@ -63,11 +63,10 @@ def sample_requests(
     tokenizer: PreTrainedTokenizerBase,
 ) -> List[Tuple[str, int, int]]:
     # Load the dataset.
-    return get_dataset(
-        name=dataset_name,
-        tokenizer=tokenizer,
-        dataset_args=DatasetArgs(num_samples=num_requests)
-    )
+    return get_dataset(name=dataset_name,
+                       tokenizer=tokenizer,
+                       dataset_args=DatasetArgs(num_samples=num_requests))
+
 
 async def get_request(
     input_requests: List[Tuple[str, int, int]],
@@ -102,7 +101,8 @@ def calculate_metrics(
             output_len = len(tokenizer.encode(outputs[i].generated_text))
             total_output += output_len
             total_input += input_requests[i][1]
-            per_token_latencies.append((outputs[i].latency - outputs[i].ttft) / output_len)
+            per_token_latencies.append(
+                (outputs[i].latency - outputs[i].ttft) / output_len)
             ttfts.append(outputs[i].ttft)
             completed += 1
 
@@ -161,7 +161,7 @@ async def benchmark(
         tasks.append(
             asyncio.create_task(
                 request_func(request_func_input=request_func_input,
-                            pbar=pbar)))
+                             pbar=pbar)))
     outputs = await asyncio.gather(*tasks)
 
     if not disable_tqdm:
@@ -190,10 +190,11 @@ async def benchmark(
     print(f"Mean TPOT: {metrics.mean_tpot_ms:.2f} ms")
     print(f"Median TPOT: {metrics.median_tpot_ms:.2f} ms")
     print(f"P99 TPOT: {metrics.p99_tpot_ms:.2f} ms")
-    
-    print("\n")
-    print(f"PromQL window: [{benchmark_unix_end_time - benchmark_unix_start_time}s] @ {benchmark_unix_end_time}")
 
+    print("\n")
+    print(
+        f"PromQL window: [{benchmark_unix_end_time - benchmark_unix_start_time}s] @ {benchmark_unix_end_time}"
+    )
 
     result = {
         "duration": benchmark_duration,
@@ -228,7 +229,7 @@ def main(args: argparse.Namespace):
         api_url = f"http://{args.host}:{args.port}{args.endpoint}"
 
     tokenizer = get_tokenizer(tokenizer_id,
-                            trust_remote_code=args.trust_remote_code)
+                              trust_remote_code=args.trust_remote_code)
     input_requests = sample_requests(args.dataset, args.num_prompts, tokenizer)
 
     benchmark_result = asyncio.run(

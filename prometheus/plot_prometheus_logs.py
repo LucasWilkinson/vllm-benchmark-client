@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 
 class PrometheusClient:
+
     def __init__(self, server_url, model_name):
         self.server_url = server_url
         self.model_name = model_name
@@ -15,7 +16,8 @@ class PrometheusClient:
 
     def get_metric(self, metric_name, time_window_expr):
         query_str = f'{metric_name}{{model_name="{self.model_name}"}}{time_window_expr}'
-        response = requests.get(self.query_api_url, params={"query": query_str})
+        response = requests.get(self.query_api_url,
+                                params={"query": query_str})
         return response.json()["data"]["result"]
 
 
@@ -40,9 +42,10 @@ def plot_hist(
     if not include_inf:
         df = df.drop(columns=["+Inf"])
 
-    df = df.reindex(
-        sorted(df.columns, key=lambda x: int(float(x)) if x != "+Inf" else 1e39), axis=1
-    )
+    df = df.reindex(sorted(df.columns,
+                           key=lambda x: int(float(x))
+                           if x != "+Inf" else 1e39),
+                    axis=1)
     df = df.diff(axis=0).diff(axis=1)
     df = df.drop(columns=["0.0"])
     df.index = (df.index - df.index.min()).astype(int)
@@ -58,7 +61,8 @@ def plot_hist(
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
 
 
-def plot_iter_tokens_hist(prom: PrometheusClient, time_window_expr: str, **kwargs):
+def plot_iter_tokens_hist(prom: PrometheusClient, time_window_expr: str,
+                          **kwargs):
     plot_hist(
         prom,
         "vllm:iteration_tokens_total_bucket",
@@ -68,7 +72,8 @@ def plot_iter_tokens_hist(prom: PrometheusClient, time_window_expr: str, **kwarg
     )
 
 
-def plot_iter_tpot_hist(prom: PrometheusClient, time_window_expr: str, **kwargs):
+def plot_iter_tpot_hist(prom: PrometheusClient, time_window_expr: str,
+                        **kwargs):
     plot_hist(
         prom,
         "vllm:time_per_output_token_seconds_bucket",
@@ -78,26 +83,29 @@ def plot_iter_tpot_hist(prom: PrometheusClient, time_window_expr: str, **kwargs)
     )
 
 
-def plot_iter_ttft_hist(prom: PrometheusClient, time_window_expr: str, **kwargs):
-    plot_hist(
-        prom, "vllm:time_to_first_token_seconds_bucket", time_window_expr, **kwargs
-    )
+def plot_iter_ttft_hist(prom: PrometheusClient, time_window_expr: str,
+                        **kwargs):
+    plot_hist(prom, "vllm:time_to_first_token_seconds_bucket",
+              time_window_expr, **kwargs)
 
 
-def plot_iter_tokens_sum_count(prom: PrometheusClient, time_window_expr: str, ax=None):
-    total_sum_results = prom.get_metric(
-        "vllm:iteration_tokens_total_sum", time_window_expr
-    )
-    total_count_results = prom.get_metric(
-        "vllm:iteration_tokens_total_count", time_window_expr
-    )
+def plot_iter_tokens_sum_count(prom: PrometheusClient,
+                               time_window_expr: str,
+                               ax=None):
+    total_sum_results = prom.get_metric("vllm:iteration_tokens_total_sum",
+                                        time_window_expr)
+    total_count_results = prom.get_metric("vllm:iteration_tokens_total_count",
+                                          time_window_expr)
 
     assert len(total_sum_results) == 1
     assert len(total_count_results) == 1
 
     df_dict = {
-        "total_tokens": {t: int(v) for t, v in total_sum_results[0]["values"]},
-        "total_iters": {t: int(v) for t, v in total_count_results[0]["values"]},
+        "total_tokens": {t: int(v)
+                         for t, v in total_sum_results[0]["values"]},
+        "total_iters":
+        {t: int(v)
+         for t, v in total_count_results[0]["values"]},
     }
 
     df = pd.DataFrame.from_dict(df_dict)
@@ -121,8 +129,7 @@ def hide_every_n_xticks(ax, n):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Benchmark the online serving throughput."
-    )
+        description="Benchmark the online serving throughput.")
     parser.add_argument(
         "time_window_expr",
         type=str,
@@ -141,14 +148,16 @@ if __name__ == "__main__":
         model_name="neuralmagic/Llama-2-7b-evolcodealpaca",
     )
 
-    fig, axs = plt.subplots(
-        4, figsize=(15, 10), sharex=True
-    )  # Adjusting figsize for better layout
+    fig, axs = plt.subplots(4, figsize=(15, 10),
+                            sharex=True)  # Adjusting figsize for better layout
 
     plot_iter_tokens_hist(prom, args.time_window_expr, ax=axs[0])
     axs[0].set_title("Iteration Tokens Histogram")
 
-    plot_iter_tokens_hist(prom, args.time_window_expr, ax=axs[1], normalize=True)
+    plot_iter_tokens_hist(prom,
+                          args.time_window_expr,
+                          ax=axs[1],
+                          normalize=True)
     axs[1].set_title("Iteration Tokens Histogram (pct)")
 
     plot_iter_tpot_hist(prom, args.time_window_expr, ax=axs[2])
